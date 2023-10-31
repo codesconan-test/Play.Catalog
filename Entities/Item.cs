@@ -4,7 +4,10 @@ using Play.Catalog.DTOs;
 
 namespace Play.Catalog.Entities;
 
-public class Item
+/// <summary>
+/// Represents an item in the catalog.
+/// </summary>
+public class Item : IEntity
 {
     /// <summary>
     /// The item's unique identifier.

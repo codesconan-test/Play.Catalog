@@ -8,64 +8,73 @@ namespace Play.Catalog.Repositories;
 /// <summary>
 /// Repository class for managing items.
 /// </summary>
-public class ItemRepository : IItemRepository
+public class ItemRepository<T> : IItemRepository<T> where T : IEntity
 {
-    private readonly IItemContext _context;
+    private readonly IItemContext<T> _context;
 
-    public ItemRepository(IItemContext context)
+    public ItemRepository(IItemContext<T> context)
     {
-        this._context = context;
+        _context = context;
     }
 
-    /// <summary>
-    /// Retrieves all items from the database.
-    /// </summary>
-    /// <returns>An enumerable collection of Item objects.</returns>
-    public async Task<IEnumerable<Item>> GetAsync()
+
+    public async Task<IEnumerable<T>> GetAsync()
     {
-        return await _context.Items.Find(item => true).ToListAsync();
+        if(_context.Items == null)
+        {
+            throw new ArgumentNullException(nameof(_context.Items));
+        }
+        return await _context.Items.Find(p => true).ToListAsync();
     }
 
-    /// <summary>
-    /// Creates a new item asynchronously.
-    /// </summary>
-    /// <param name="item">The item to create.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task CreateAsync(Item item)
+    public async Task CreateAsync(T item)
     {
-        await _context.Items.InsertOneAsync(item);
+       if (item == null)
+       {
+           throw new ArgumentNullException(nameof(item));
+       }
+       
+       await _context.Items.InsertOneAsync(item);
     }
 
-    /// <summary>
-    /// Retrieves an item from the database by its ID.
-    /// </summary>
-    /// <param name="id">The ID of the item to retrieve.</param>
-    /// <returns>The retrieved item, or null if it doesn't exist.</returns>
-    public async Task<Item?> GetAsync(Guid id)
+    public async Task<T?> GetAsync(Guid id)
     {
-        return await _context.Items.Find(item => item.Id == id).FirstOrDefaultAsync();
+        if(id == Guid.Empty)
+        {
+            throw new ArgumentNullException(nameof(id));
+        }
+        
+        return await _context.Items.Find(p => p.Id == id).FirstOrDefaultAsync();
     }
 
-    /// <summary>
-    /// Updates an item in the database.
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="item">The item to update.</param>
-    /// <returns>A boolean indicating whether the update was successful.</returns>
-    public async Task<bool> UpdateAsync(Guid id, Item item)
+    public async Task<bool> UpdateAsync(Guid id, T item)
     {
-        var updateResult = await _context.Items.ReplaceOneAsync(filter: item1 => item1.Id == id, replacement: item);
+        if(id == Guid.Empty)
+        {
+            throw new ArgumentNullException(nameof(id));
+        }
+        
+        if(item == null)
+        {
+            throw new ArgumentNullException(nameof(item));
+        }
+        
+        var updateResult = await _context.Items.ReplaceOneAsync(filter: g => g.Id == id, replacement: item);
         return updateResult.IsAcknowledged && updateResult.ModifiedCount > 0;
     }
 
-    /// <summary>
-    /// Deletes an item from the database.
-    /// </summary>
-    /// <param name="id">The ID of the item to delete.</param>
-    /// <returns>A boolean indicating whether the deletion was successful.</returns>
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var deleteResult = await _context.Items.DeleteOneAsync(item => item.Id == id);
+        if(id == Guid.Empty)
+        {
+            throw new ArgumentNullException(nameof(id));
+        }
+        
+        var filter = Builders<T>.Filter.Eq(p => p.Id, id);
+        
+        // delete item
+        var deleteResult = await _context.Items.DeleteOneAsync(filter);
+        
         return deleteResult.IsAcknowledged && deleteResult.DeletedCount > 0;
     }
 }

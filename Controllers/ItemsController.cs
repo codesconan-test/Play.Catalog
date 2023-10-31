@@ -14,41 +14,35 @@ public class ItemsController : ControllerBase
 {
 
    // repository 
-   private readonly IItemRepository _repository;
+    private readonly IItemRepository<Item> _repository;
 
-    public ItemsController(IItemRepository repository)
+    public ItemsController(IItemRepository<Item> repository)
     {
-        _repository = repository?? throw new ArgumentNullException(nameof(repository));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
     
-    /// <summary>
-    /// Retrieves all items from the repository.
-    /// </summary>
-    /// <returns>An enumerable collection of ItemDto objects.</returns>
+    // endpoint: GET /items
     [HttpGet]
     public async Task<IEnumerable<Dtos.ItemDto>> GetAsync()
     {
-        var items = await _repository.GetAsync();
-        
-        return items.Select(item => item.AsDto());
+        var items = (await _repository.GetAsync())
+            .Select(item => item.AsDto());
+        return items;
     }
     
-    // get item by id
+    // endpoint: GET /items/{id}
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Dtos.ItemDto>> GetByIdAsync(Guid id)
     {
         var item = await _repository.GetAsync(id);
-        
-        if (item is null)
+        if(item == null)
         {
             return NotFound();
         }
-        
         return item.AsDto();
     }
     
-    
-    // create item
+    // endpoint: POST /items
     [HttpPost]
     public async Task<ActionResult<Dtos.ItemDto>> PostAsync(Dtos.CreateItemDto createItemDto)
     {
@@ -57,50 +51,13 @@ public class ItemsController : ControllerBase
             Name = createItemDto.Name,
             Description = createItemDto.Description,
             Price = createItemDto.Price,
-            CreatedDate = DateTime.Now
+            CreatedDate = DateTimeOffset.UtcNow.Date
         };
         
-        await _repository.CreateAsync(item); 
-
-        return CreatedAtAction("GetById", new {id = item.Id}, item.AsDto());
+        await _repository.CreateAsync(item);
+        
+        return CreatedAtAction("GetById", new {id = item.Id}, item);
     }
     
-    // update item
-    [HttpPut("{id:guid}")]
-    public async Task<ActionResult> PutAsync(Guid id, Dtos.UpdateItemDto updateItemDto)
-    {
-        var existingItem = await _repository.GetAsync(id);
-        
-        if (existingItem is null)
-        {
-            return NotFound();
-        }
-        
-        existingItem.Name = updateItemDto.Name;
-        existingItem.Description = updateItemDto.Description;
-        existingItem.Price = updateItemDto.Price;
-        
-        await _repository.UpdateAsync(id, existingItem);
-        
-        return NoContent();
-    }
-    
-    
-    // delete item
-    [HttpDelete("{id:guid}")]
-    public async Task<ActionResult> DeleteAsync(Guid id)
-    {
-        var existingItem = await _repository.GetAsync(id);
-        
-        if (existingItem is null)
-        {
-            return NotFound();
-        }
-        
-        await _repository.DeleteAsync(id);
-        
-        return NoContent();
-    }
-
     
 }

@@ -8,7 +8,7 @@ namespace Play.Catalog.Data.Contexts;
 /// <summary>
 /// Represents the MongoDB context for the Item entity.
 /// </summary>
-public class ItemContext : IItemContext
+public class ItemContext : IItemContext<Item>
 {
     public ItemContext(IConfiguration configuration)
     {

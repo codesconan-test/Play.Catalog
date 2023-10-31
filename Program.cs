@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using Play.Catalog.Data.Contexts;
 using Play.Catalog.Data.Interfaces;
+using Play.Catalog.Entities;
 using Play.Catalog.Repositories;
 using Play.Catalog.Repositories.Interfaces;
 
@@ -18,8 +19,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register the ItemContext and ItemRepository services with the container
-builder.Services.AddScoped<IItemContext, ItemContext>();
-builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IItemContext<Item>, ItemContext>();
+builder.Services.AddScoped<IItemRepository<Item>, ItemRepository<Item>>();
 
 // Register a custom serializer for Guids as strings
 BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
