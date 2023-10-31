@@ -1,0 +1,13 @@
+version: "3.3"
+
+# mongo
+services:
+  mongo:
+    image: mongo:3.6
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodata/db:/data/db
+      - ./mongodata/configdb:/data/configdb
