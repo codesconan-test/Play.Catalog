@@ -1,4 +1,8 @@
-﻿namespace Play.Catalog.Entities;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using Play.Catalog.DTOs;
+
+namespace Play.Catalog.Entities;
 
 public class Item
 {
@@ -25,5 +29,17 @@ public class Item
     /// <summary>
     /// The item's created date.
     /// </summary>
-    public DateTimeOffset CreatedDate { get; set; }
+    [BsonElement("CreatedDate")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+    [BsonRepresentation(BsonType.DateTime)]
+    public DateTime CreatedDate { get; set; }
+
+    /// <summary>
+    /// Converts the current Item object to an ItemDto object.
+    /// </summary>
+    /// <returns>The converted ItemDto object.</returns>
+    public Dtos.ItemDto AsDto()
+    {
+        return new Dtos.ItemDto(Id, Name, Description, Price, CreatedDate);
+    }
 }
