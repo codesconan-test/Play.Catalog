@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Play.Catalog.DTOs;
+using Play.Catalog.Entities;
+using Play.Catalog.Repositories.Interfaces;
 
 namespace Play.Catalog.Controllers;
 
@@ -7,111 +9,98 @@ namespace Play.Catalog.Controllers;
 /// Controller for managing items.
 /// </summary>
 [ApiController]
-[Route("items")]
+[Route("api/v1/[controller]")]
 public class ItemsController : ControllerBase
 {
 
-    /// <summary>
-    /// Represents a collection of items.
-    /// </summary>
-    private static readonly List<Dtos.ItemDto> Items = new()
+   // repository 
+   private readonly IItemRepository _repository;
+
+    public ItemsController(IItemRepository repository)
     {
-        new Dtos.ItemDto(Guid.NewGuid(), "Potion", "Restores a small amount of HP", 5, DateTimeOffset.UtcNow),
-        new Dtos.ItemDto(Guid.NewGuid(), "Antidote", "Cures poison", 7, DateTimeOffset.UtcNow),
-        new Dtos.ItemDto(Guid.NewGuid(), "Bronze Sword", "Deals a small amount of damage", 20, DateTimeOffset.UtcNow)
-    };
-
-
+        _repository = repository?? throw new ArgumentNullException(nameof(repository));
+    }
+    
     /// <summary>
-    /// Retrieves all items.
+    /// Retrieves all items from the repository.
     /// </summary>
-    /// <returns>An IEnumerable of ItemDto.</returns>
+    /// <returns>An enumerable collection of ItemDto objects.</returns>
     [HttpGet]
-    public IEnumerable<Dtos.ItemDto> Get()
+    public async Task<IEnumerable<Dtos.ItemDto>> GetAsync()
     {
-        return Items;
+        var items = await _repository.GetAsync();
+        
+        return items.Select(item => item.AsDto());
     }
-
-
-    /// <summary>
-    /// Represents an item data transfer object.
-    /// </summary>
+    
+    // get item by id
     [HttpGet("{id:guid}")]
-    public Dtos.ItemDto? GetById(Guid id)
+    public async Task<ActionResult<Dtos.ItemDto>> GetByIdAsync(Guid id)
     {
-        var item = Items.SingleOrDefault(item => item.Id == id);
-        return item;
+        var item = await _repository.GetAsync(id);
+        
+        if (item is null)
+        {
+            return NotFound();
+        }
+        
+        return item.AsDto();
     }
-
-
-    /// <summary>
-    /// Creates a new item.
-    /// </summary>
-    /// <param name="itemDto">The item data transfer object.</param>
-    /// <returns>The newly created item.</returns>
+    
+    
+    // create item
     [HttpPost]
-    public ActionResult<Dtos.ItemDto> Post(Dtos.CreateItemDto itemDto)
+    public async Task<ActionResult<Dtos.ItemDto>> PostAsync(Dtos.CreateItemDto createItemDto)
     {
-        var item = new Dtos.ItemDto(Guid.NewGuid(), itemDto.Name, itemDto.Description, itemDto.Price, DateTimeOffset.UtcNow);
-        Items.Add(item);
-        return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
-    }
-
-
-    /// <summary>
-    /// Updates an item.
-    /// </summary>
-    /// <param name="id">The item's ID.</param>
-    /// <param name="itemDto">The item data transfer object.</param>
-    /// <returns>A NoContentResult.</returns>
-    /// <remarks>
-    /// The <see cref="ProducesResponseTypeAttribute"/> is used to specify the HTTP status code returned by the action.
-    /// </remarks>
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult Put(Guid id, Dtos.UpdateItemDto itemDto)
-    {
-        var existingItem = Items.SingleOrDefault(item => item.Id == id);
-        if (existingItem is null)
+        var item = new Item
         {
-            return NotFound();
-        }
-
-        var updatedItem = existingItem with
-        {
-            Name = itemDto.Name,
-            Description = itemDto.Description,
-            Price = itemDto.Price
+            Name = createItemDto.Name,
+            Description = createItemDto.Description,
+            Price = createItemDto.Price,
+            CreatedDate = DateTime.Now
         };
+        
+        await _repository.CreateAsync(item); 
 
-        var index = Items.FindIndex(item => item.Id == id);
-        Items[index] = updatedItem;
-
-        return NoContent();
+        return CreatedAtAction("GetById", new {id = item.Id}, item.AsDto());
     }
     
-    
-
-    /// <summary>
-    /// Deletes an item with the specified ID.
-    /// </summary>
-    /// <param name="id">The ID of the item to delete.</param>
-    /// <returns>Returns a NoContent result if the item was deleted successfully, or a NotFound result if the item was not found.</returns>
-    [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult Delete(Guid id)
+    // update item
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult> PutAsync(Guid id, Dtos.UpdateItemDto updateItemDto)
     {
-        var existingItem = Items.SingleOrDefault(item => item.Id == id);
+        var existingItem = await _repository.GetAsync(id);
+        
         if (existingItem is null)
         {
             return NotFound();
         }
-
-        Items.Remove(existingItem);
-
+        
+        existingItem.Name = updateItemDto.Name;
+        existingItem.Description = updateItemDto.Description;
+        existingItem.Price = updateItemDto.Price;
+        
+        await _repository.UpdateAsync(id, existingItem);
+        
+        return NoContent();
+    }
+    
+    
+    // delete item
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult> DeleteAsync(Guid id)
+    {
+        var existingItem = await _repository.GetAsync(id);
+        
+        if (existingItem is null)
+        {
+            return NotFound();
+        }
+        
+        await _repository.DeleteAsync(id);
+        
         return NoContent();
     }
 
+    
 }
