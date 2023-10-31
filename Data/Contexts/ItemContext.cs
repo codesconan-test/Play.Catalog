@@ -10,12 +10,12 @@ namespace Play.Catalog.Data.Contexts;
 /// </summary>
 public class ItemContext : IItemContext
 {
-    public ItemContext()
+    public ItemContext(IConfiguration configuration)
     {
-        var client = new MongoClient("mongodb://localhost:27017");
-        var database = client.GetDatabase("Catalog");
+        var client = new MongoClient(configuration.GetValue<string>("DatabaseSettings:ConnectionString"));
+        var database = client.GetDatabase(configuration.GetValue<string>("DatabaseSettings:DatabaseName"));
         
-        Items = database.GetCollection<Item>("Items");
+        Items = database.GetCollection<Item>(configuration.GetValue<string>("DatabaseSettings:CollectionName"));
         
         ItemContextSeed.SeedData(Items);
     }

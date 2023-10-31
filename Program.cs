@@ -8,6 +8,7 @@ using Play.Catalog.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -22,6 +23,7 @@ builder.Services.AddScoped<IItemRepository, ItemRepository>();
 
 // Register a custom serializer for Guids as strings
 BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
+
 
 var app = builder.Build();
 
