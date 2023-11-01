@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Play.Catalog.DTOs;
 using Play.Catalog.Entities;
-using Play.Catalog.Repositories.Interfaces;
+using Play.Common.Repositories.Interfaces;
 
 namespace Play.Catalog.Controllers;
 
@@ -23,12 +23,13 @@ public class ItemsController : ControllerBase
     
     // endpoint: GET /items
     [HttpGet]
-    public async Task<IEnumerable<Dtos.ItemDto>> GetAsync()
+    public async Task<ActionResult<IEnumerable<Dtos.ItemDto>>> GetAsync()
     {
-        var items = (await _repository.GetAsync())
-            .Select(item => item.AsDto());
-        return items;
+        var items = (await _repository.GetAllAsync()).Select(item => item.AsDto());
+        return Ok(items);
     }
+    
+    
     
     // endpoint: GET /items/{id}
     [HttpGet("{id:guid}")]

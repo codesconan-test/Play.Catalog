@@ -2,10 +2,10 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using Play.Catalog.Data.Contexts;
-using Play.Catalog.Data.Interfaces;
 using Play.Catalog.Entities;
-using Play.Catalog.Repositories;
-using Play.Catalog.Repositories.Interfaces;
+using Play.Common.Data;
+using Play.Common.Repositories;
+using Play.Common.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

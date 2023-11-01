@@ -1,7 +1,7 @@
 ﻿using MongoDB.Driver;
-using Play.Catalog.Data.Interfaces;
 using Play.Catalog.Data.Seeds;
 using Play.Catalog.Entities;
+using Play.Common.Data;
 
 namespace Play.Catalog.Data.Contexts;
 
